@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive English Test</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --correct: #166534;
+      --correct-bg: #dcfce7;
+      --incorrect: #991b1b;
+      --incorrect-bg: #fee2e2;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 180px);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 32px auto 48px;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .progress-card,
+    .section,
+    .results-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .progress-card {
+      position: sticky;
+      top: 12px;
+      z-index: 5;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+    }
+
+    .progress-top {
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      transition: width 0.25s ease;
+    }
+
+    .section {
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+
+    .section h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.35rem;
+    }
+
+    .instructions {
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .word-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 16px;
+      border: 2px solid #374151;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      background: #fafafa;
+    }
+
+    .word-bank span {
+      padding: 6px 10px;
+      background: #f3f4f6;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      font-weight: 600;
+    }
+
+    .passage {
+      font-size: 1.03rem;
+    }
+
+    .blank {
+      width: 120px;
+      max-width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      font: inherit;
+      text-align: center;
+      transition: 0.2s ease;
+      margin: 0 4px;
+      background: #fff;
+    }
+
+    .blank.small {
+      width: 88px;
+    }
+
+    .blank.medium {
+      width: 110px;
+    }
+
+    .blank.large {
+      width: 135px;
+    }
+
+    .blank:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    .correct-input {
+      border-color: var(--correct) !important;
+      background: var(--correct-bg) !important;
+      color: var(--correct);
+    }
+
+    .incorrect-input {
+      border-color: var(--incorrect) !important;
+      background: var(--incorrect-bg) !important;
+      color: var(--incorrect);
+    }
+
+    .inline-feedback {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .inline-feedback.correct {
+      color: var(--correct);
+    }
+
+    .inline-feedback.incorrect {
+      color: var(--incorrect);
+    }
+
+    .mcq-list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .question {
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fcfcfd;
+    }
+
+    .question.correct {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+
+    .question.incorrect {
+      border-color: #fca5a5;
+      background: #fef2f2;
+    }
+
+    .q-text {
+      margin: 0 0 10px;
+      font-weight: 600;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      background: #fff;
+      transition: 0.2s ease;
+    }
+
+    .option:hover {
+      border-color: var(--accent);
+      background: #f8fbff;
+    }
+
+    .option input {
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .option.correct-option {
+      border-color: var(--correct);
+      background: var(--correct-bg);
+    }
+
+    .option.incorrect-option {
+      border-color: var(--incorrect);
+      background: var(--incorrect-bg);
+    }
+
+    .feedback-block {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .feedback-block.correct {
+      color: var(--correct);
+    }
+
+    .feedback-block.incorrect {
+      color: var(--incorrect);
+    }
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin: 28px 0 18px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .check-btn {
+      background: var(--accent);
+      color: white;
+    }
+
+    .reset-btn {
+      background: #111827;
+      color: white;
+    }
+
+    .results-card {
+      padding: 22px;
+      margin-top: 10px;
+    }
+
+    .score-line {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .section-scores {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .score-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f3f4f6;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        width: min(100% - 20px, 1100px);
+        margin-top: 18px;
+      }
+
+      .section,
+      header,
+      .results-card {
+        padding: 18px;
+      }
+
+      .blank {
+        width: 100px;
+      }
+
+      .passage {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Interactive English Test</h1>
+      <p class="subtitle">Complete all five exercises, then check your answers to see your score.</p>
+    </header>
+
+    <div class="progress-card" aria-live="polite">
+      <div class="progress-top">
+        <strong>Progress</strong>
+        <span id="progressText">0 / 40 answers completed</span>
+      </div>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <section class="section" id="section1">
+      <h2>1) Complete the paragraph by writing one word from the box in each gap.</h2>
+      <p class="instructions">There are four extra words you do not need to use.</p>
+      <div class="word-bank" aria-label="Word bank">
+        <span>analysis</span>
+        <span>argument</span>
+        <span>assignment</span>
+        <span>data</span>
+        <span>experiments</span>
+        <span>findings</span>
+        <span>hypothesis</span>
+        <span>investigation</span>
+        <span>journal</span>
+        <span>laboratory</span>
+        <span>proof</span>
+        <span>research</span>
+        <span>steps</span>
+      </div>
+      <div class="passage">
+        The scientific method often consists of the following (0) <strong>steps</strong>. First, scientists identify a problem or area they want to
+        (1) <input class="blank medium text-answer" data-answer="research" data-section="1" aria-label="Question 1.1" />
+        or investigate. They then examine existing information or
+        (2) <input class="blank medium text-answer" data-answer="data" data-section="1" aria-label="Question 1.2" />
+        on the subject and propose a theory or
+        (3) <input class="blank large text-answer" data-answer="hypothesis" data-section="1" aria-label="Question 1.3" />.
+        They may then carry out further investigation in order to collect more information. They may also conduct
+        (4) <input class="blank large text-answer" data-answer="experiments" data-section="1" aria-label="Question 1.4" />
+        in order to test their theory. While we often think of scientists working in a
+        (5) <input class="blank large text-answer" data-answer="laboratory" data-section="1" aria-label="Question 1.5" />,
+        they may also do a lot of work using a computer or outside in the field. Once scientists have completed these stages, they then conduct an
+        (6) <input class="blank medium text-answer" data-answer="analysis" data-section="1" aria-label="Question 1.6" />
+        of all the information and modify their theory accordingly. A final stage is often that they publish their
+        (7) <input class="blank medium text-answer" data-answer="findings" data-section="1" aria-label="Question 1.7" />
+        (in other words, what they have discovered) in a scientific
+        (8) <input class="blank medium text-answer" data-answer="journal" data-section="1" aria-label="Question 1.8" />.
+      </div>
+    </section>
+
+    <section class="section" id="section2">
+      <h2>2) Choose the best alternative (A, B or C) for each of these sentences.</h2>
+      <div class="mcq-list" id="mcqContainer"></div>
+    </section>
+
+    <section class="section" id="section3">
+      <h2>3) Complete these sentences by putting the verbs in brackets into the correct tense: past simple, present perfect simple or present perfect continuous.</h2>
+      <div class="passage">
+        <p>0 Darwin <strong>spent</strong> (spend) more than 20 years working on <em>On the Origin of Species</em> before its publication in 1859.</p>
+        <p>1 Farouk <input class="blank large text-answer" data-answer="has been studying" data-section="3" aria-label="Question 3.1" /> (study) so hard recently that we've hardly seen him.</p>
+        <p>2 Scientists <input class="blank large text-answer" data-answer="have been conducting" data-section="3" aria-label="Question 3.2" /> (conduct) a national study into people's sleeping habits which they hope to complete in the autumn.</p>
+        <p>3 Joyce <input class="blank medium text-answer" data-answer="lived" data-section="3" aria-label="Question 3.3" /> (live) in Italy for over ten years before moving to Switzerland in 1915.</p>
+        <p>4 Takeshi is unable to give his presentation this morning as his computer <input class="blank medium text-answer" data-answer="has broken" data-section="3" aria-label="Question 3.4" /> (break) down.</p>
+        <p>5 I <input class="blank medium text-answer" data-answer="haven't seen" data-section="3" aria-label="Question 3.5" /> (not see) the film yet, but I hope to see it this weekend.</p>
+        <p>6 I <input class="blank small text-answer" data-answer="spoke" data-section="3" aria-label="Question 3.6" /> (speak) to your supervisor yesterday and he says your work is fine.</p>
+      </div>
+    </section>
+
+    <section class="section" id="section4">
+      <h2>4) Complete this paragraph by writing <em>the</em>, <em>a</em>, <em>an</em> or <em>-</em> if no article is needed.</h2>
+      <div class="passage">
+        Before (0) <strong>the</strong> World Wide Web was invented, (0) <strong>-</strong> scientists had difficulty communicating on
+        (1) <input class="blank small text-answer" data-answer="-" data-section="4" aria-label="Question 4.1" />
+        complex projects, especially if they were working in
+        (2) <input class="blank small text-answer" data-answer="-" data-section="4" aria-label="Question 4.2" />
+        different parts of
+        (3) <input class="blank small text-answer" data-answer="the" data-section="4" aria-label="Question 4.3" />
+        world.
+        (4) <input class="blank small text-answer" data-answer="the" data-section="4" aria-label="Question 4.4" />
+        ability to share
+        (5) <input class="blank small text-answer" data-answer="-" data-section="4" aria-label="Question 4.5" />
+        information instantaneously is
+        (6) <input class="blank small text-answer" data-answer="an" data-section="4" aria-label="Question 4.6" />
+        enormous advantage because it allows, for example,
+        (7) <input class="blank small text-answer" data-answer="a" data-section="4" aria-label="Question 4.7" />
+        scientist working in Peru to work closely on
+        (8) <input class="blank small text-answer" data-answer="the" data-section="4" aria-label="Question 4.8" />
+        same project as
+        (9) <input class="blank small text-answer" data-answer="-" data-section="4" aria-label="Question 4.9" />
+        colleagues working in
+        (10) <input class="blank small text-answer" data-answer="a" data-section="4" aria-label="Question 4.10" />
+        university in India.
+      </div>
+    </section>
+
+    <section class="section" id="section5">
+      <h2>5) Complete these sentences, writing the correct preposition (<em>by</em>, <em>for</em>, <em>with</em>, <em>to</em>, etc.) in each gap. For some questions, more than one answer is possible.</h2>
+      <div class="passage">
+        The graph shows the number (0) <strong>of</strong> visits per month to a website
+        (1) <input class="blank small text-answer" data-answer="in" data-section="5" aria-label="Question 5.1" />
+        2011. During the period
+        (2) <input class="blank small text-answer" data-answer="from" data-section="5" aria-label="Question 5.2" />
+        January to March, visits rose
+        (3) <input class="blank small text-answer" data-answer="by" data-section="5" aria-label="Question 5.3" />
+        27 percent to a total of 9,589.
+        (4) <input class="blank medium text-answer" data-answer="between" data-section="5" aria-label="Question 5.4" />
+        April and June visits remained steady
+        (5) <input class="blank small text-answer" data-answer="at" data-section="5" aria-label="Question 5.5" />
+        just over 9,600.
+        (6) <input class="blank small text-answer" data-answer="in" data-section="5" aria-label="Question 5.6" />
+        July there was a 10 percent fall
+        (7) <input class="blank small text-answer" data-answer="in" data-section="5" aria-label="Question 5.7" />
+        visits. During the next seven months, visits fell
+        (8) <input class="blank small text-answer" data-answer="to" data-section="5" aria-label="Question 5.8" />
+        a level in December of about 8,000.
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="check-btn" id="checkBtn">Check Answers</button>
+      <button class="reset-btn" id="resetBtn" type="button">Reset Test</button>
+    </div>
+
+    <section class="results-card" id="results" aria-live="polite">
+      <div class="score-line">Your score will appear here after you check your answers.</div>
+      <div class="muted">Complete all questions and press “Check Answers”.</div>
+      <div class="section-scores" id="sectionScores"></div>
+    </section>
+  </div>
+
+  <script>
+    const mcqData = [
+      {
+        id: '2.1',
+        section: '2',
+        text: '1 If you’re not sure what the process is called, you can ______ by looking in an online encyclopedia.',
+        options: {
+          A: 'learn it',
+          B: 'know it',
+          C: 'find it out'
+        },
+        answer: 'C'
+      },
+      {
+        id: '2.2',
+        section: '2',
+        text: '2 Chan-juan wants to ______ how to drive, so she’s starting lessons next week.',
+        options: {
+          A: 'learn',
+          B: 'study',
+          C: 'find out'
+        },
+        answer: 'A'
+      },
+      {
+        id: '2.3',
+        section: '2',
+        text: '3 Nasr is planning to ______ medicine at university.',
+        options: {
+          A: 'learn',
+          B: 'study',
+          C: 'find out'
+        },
+        answer: 'B'
+      },
+      {
+        id: '2.4',
+        section: '2',
+        text: '4 The main ______ why Sasha came to this country was to learn English.',
+        options: {
+          A: 'cause',
+          B: 'reason',
+          C: 'factor'
+        },
+        answer: 'B'
+      },
+      {
+        id: '2.5',
+        section: '2',
+        text: '5 A person’s weight may be influenced by their diet and their genes, but exercise is also a ______.',
+        options: {
+          A: 'cause',
+          B: 'reason',
+          C: 'factor'
+        },
+        answer: 'C'
+      },
+      {
+        id: '2.6',
+        section: '2',
+        text: '6 ______ he is an excellent researcher, he has never published an article.',
+        options: {
+          A: 'However',
+          B: 'Although',
+          C: 'On the other hand'
+        },
+        answer: 'B'
+      },
+      {
+        id: '2.7',
+        section: '2',
+        text: '7 She handed in her assignment without apologising to her teacher ______ it was two weeks late.',
+        options: {
+          A: 'even though',
+          B: 'however',
+          C: 'but'
+        },
+        answer: 'A'
+      },
+      {
+        id: '2.8',
+        section: '2',
+        text: '8 I enjoy watching films. ______, I never download them from the Internet.',
+        options: {
+          A: 'Although',
+          B: 'Even though',
+          C: 'However'
+        },
+        answer: 'C'
+      }
+    ];
+
+    const totalQuestions = 40;
+    const sectionTotals = {
+      '1': 8,
+      '2': 8,
+      '3': 6,
+      '4': 10,
+      '5': 8
+    };
+
+    const mcqContainer = document.getElementById('mcqContainer');
+    const progressText = document.getElementById('progressText');
+    const progressFill = document.getElementById('progressFill');
+    const results = document.getElementById('results');
+    const sectionScores = document.getElementById('sectionScores');
+
+    function renderMCQs() {
+      mcqContainer.innerHTML = `
+        <div class="question" aria-disabled="true">
+          <p class="q-text">0 In his first job he <strong>taught</strong> natural sciences to first-year students.</p>
+          <div class="options">
+            <label class="option"><input type="radio" disabled checked /> <span>A learned</span></label>
+            <label class="option"><input type="radio" disabled checked /> <span>B studied</span></label>
+            <label class="option correct-option"><input type="radio" disabled checked /> <span>C taught</span></label>
+          </div>
+          <div class="feedback-block correct">Example answer: C</div>
+        </div>
+      `;
+
+      mcqData.forEach((q, index) => {
+        const article = document.createElement('article');
+        article.className = 'question';
+        article.dataset.questionId = q.id;
+        article.dataset.answer = q.answer;
+        article.dataset.section = q.section;
+
+        const optionsHtml = Object.entries(q.options)
+          .map(([key, value]) => `
+            <label class="option" data-option="${key}">
+              <input type="radio" name="mcq-${index}" value="${key}" />
+              <span><strong>${key}</strong> ${value}</span>
+            </label>
+          `)
+          .join('');
+
+        article.innerHTML = `
+          <p class="q-text">${q.text}</p>
+          <div class="options">${optionsHtml}</div>
+          <div class="feedback-block" hidden></div>
+        `;
+
+        mcqContainer.appendChild(article);
+      });
+    }
+
+    function normalizeText(value) {
+      return value.trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function isBlankAccepted(userValue, correctValue) {
+      const normalizedUser = normalizeText(userValue);
+      const normalizedCorrect = normalizeText(correctValue);
+      if (!normalizedUser) return false;
+
+      const noArticleValues = ['-', 'no article', 'none'];
+      if (correctValue === '-') {
+        return noArticleValues.includes(normalizedUser);
+      }
+
+      return normalizedUser === normalizedCorrect;
+    }
+
+    function clearInlineFeedback(input) {
+      const next = input.nextElementSibling;
+      if (next && next.classList.contains('inline-feedback')) {
+        next.remove();
+      }
+    }
+
+    function setInlineFeedback(input, message, status) {
+      clearInlineFeedback(input);
+      const span = document.createElement('span');
+      span.className = `inline-feedback ${status}`;
+      span.textContent = message;
+      input.insertAdjacentElement('afterend', span);
+    }
+
+    function updateProgress() {
+      const textInputs = [...document.querySelectorAll('.text-answer')];
+      const answeredText = textInputs.filter(input => input.value.trim() !== '').length;
+
+      const answeredMcq = [...document.querySelectorAll('#mcqContainer .question[data-question-id]')]
+        .filter(question => question.querySelector('input[type="radio"]:checked'))
+        .length;
+
+      const answered = answeredText + answeredMcq;
+      const percentage = (answered / totalQuestions) * 100;
+      progressText.textContent = `${answered} / ${totalQuestions} answers completed`;
+      progressFill.style.width = `${percentage}%`;
+    }
+
+    function checkAnswers() {
+      let score = 0;
+      const sectionScoresMap = {
+        '1': 0,
+        '2': 0,
+        '3': 0,
+        '4': 0,
+        '5': 0
+      };
+
+      document.querySelectorAll('.text-answer').forEach(input => {
+        const correctAnswer = input.dataset.answer;
+        const section = input.dataset.section;
+        clearInlineFeedback(input);
+        input.classList.remove('correct-input', 'incorrect-input');
+
+        if (isBlankAccepted(input.value, correctAnswer)) {
+          input.classList.add('correct-input');
+          setInlineFeedback(input, '✓', 'correct');
+          score += 1;
+          sectionScoresMap[section] += 1;
+        } else {
+          input.classList.add('incorrect-input');
+          setInlineFeedback(input, `✗ Correct: ${correctAnswer}`, 'incorrect');
+        }
+      });
+
+      document.querySelectorAll('#mcqContainer .question[data-question-id]').forEach(question => {
+        const selected = question.querySelector('input[type="radio"]:checked');
+        const correctAnswer = question.dataset.answer;
+        const section = question.dataset.section;
+        const feedback = question.querySelector('.feedback-block');
+
+        question.classList.remove('correct', 'incorrect');
+        question.querySelectorAll('.option').forEach(option => {
+          option.classList.remove('correct-option', 'incorrect-option');
+        });
+
+        if (selected && selected.value === correctAnswer) {
+          question.classList.add('correct');
+          const selectedOption = selected.closest('.option');
+          if (selectedOption) selectedOption.classList.add('correct-option');
+          feedback.hidden = false;
+          feedback.className = 'feedback-block correct';
+          feedback.textContent = '✓ Correct';
+          score += 1;
+          sectionScoresMap[section] += 1;
+        } else {
+          question.classList.add('incorrect');
+          feedback.hidden = false;
+          feedback.className = 'feedback-block incorrect';
+          const correctLabel = question.querySelector(`.option[data-option="${correctAnswer}"]`);
+          if (correctLabel) correctLabel.classList.add('correct-option');
+          if (selected) {
+            const chosenLabel = selected.closest('.option');
+            if (chosenLabel) chosenLabel.classList.add('incorrect-option');
+          }
+          feedback.textContent = `✗ Correct answer: ${correctAnswer}`;
+        }
+      });
+
+      const percentage = Math.round((score / totalQuestions) * 100);
+      results.innerHTML = `
+        <div class="score-line">You scored ${score}/${totalQuestions} (${percentage}%).</div>
+        <div class="muted">Review the highlighted answers below. Green is correct and red is incorrect.</div>
+      `;
+
+      sectionScores.innerHTML = '';
+      const sectionLabels = {
+        '1': 'Exercise 1',
+        '2': 'Exercise 2',
+        '3': 'Exercise 3',
+        '4': 'Exercise 4',
+        '5': 'Exercise 5'
+      };
+
+      Object.keys(sectionTotals).forEach(key => {
+        const item = document.createElement('div');
+        item.className = 'score-item';
+        item.textContent = `${sectionLabels[key]}: ${sectionScoresMap[key]} / ${sectionTotals[key]}`;
+        sectionScores.appendChild(item);
+      });
+
+      results.appendChild(sectionScores);
+      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resetTest() {
+      document.querySelectorAll('.text-answer').forEach(input => {
+        input.value = '';
+        input.classList.remove('correct-input', 'incorrect-input');
+        clearInlineFeedback(input);
+      });
+
+      document.querySelectorAll('#mcqContainer .question[data-question-id]').forEach(question => {
+        question.classList.remove('correct', 'incorrect');
+        question.querySelectorAll('input[type="radio"]').forEach(radio => {
+          radio.checked = false;
+        });
+        question.querySelectorAll('.option').forEach(option => {
+          option.classList.remove('correct-option', 'incorrect-option');
+        });
+        const feedback = question.querySelector('.feedback-block');
+        feedback.hidden = true;
+        feedback.textContent = '';
+        feedback.className = 'feedback-block';
+      });
+
+      results.innerHTML = `
+        <div class="score-line">Your score will appear here after you check your answers.</div>
+        <div class="muted">Complete all questions and press “Check Answers”.</div>
+      `;
+      sectionScores.innerHTML = '';
+      results.appendChild(sectionScores);
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    renderMCQs();
+    updateProgress();
+
+    document.addEventListener('input', (event) => {
+      if (event.target.matches('.text-answer')) {
+        updateProgress();
+      }
+    });
+
+    document.addEventListener('change', (event) => {
+      if (event.target.matches('input[type="radio"]')) {
+        updateProgress();
+      }
+    });
+
+    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+    document.getElementById('resetBtn').addEventListener('click', resetTest);
+  </script>
+</body>
+</html>
